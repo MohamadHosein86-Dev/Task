@@ -1,10 +1,10 @@
-'use client';
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { getUserFromStorage, removeUserFromStorage } from '@/lib/storage';
-import { User } from '@/types';
-import Button from '@/components/Button';
-import styles from './page.module.scss';
+"use client";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getUserFromStorage, removeUserFromStorage } from "@/lib/storage";
+import { User } from "@/types";
+import Button from "@/components/ui/Button";
+import styles from "./page.module.scss";
 
 const DashboardPage: React.FC = () => {
   const router = useRouter();
@@ -14,7 +14,7 @@ const DashboardPage: React.FC = () => {
   useEffect(() => {
     const userData = getUserFromStorage();
     if (!userData) {
-      router.push('/auth');
+      router.push("/auth");
       return;
     }
     setUser(userData);
@@ -23,7 +23,7 @@ const DashboardPage: React.FC = () => {
 
   const handleLogout = () => {
     removeUserFromStorage();
-    router.push('/auth');
+    router.push("/auth");
   };
 
   if (isLoading) {
@@ -40,6 +40,15 @@ const DashboardPage: React.FC = () => {
   if (!user) {
     return null;
   }
+  const {
+    registered: { date },
+    dob: { age },
+    name: { title, first, last },
+    phone,
+    picture: { large },
+    email,
+    location: { city, country }
+  } = user;
 
   return (
     <div className={styles.container}>
@@ -47,14 +56,10 @@ const DashboardPage: React.FC = () => {
         <div className={styles.welcomeSection}>
           <h1 className={styles.title}>خوش آمدید به داشبورد</h1>
           <p className={styles.subtitle}>
-            سلام {user.name.first} {user.name.last}!
+            سلام {first} {last}!
           </p>
         </div>
-        <Button
-          variant="secondary"
-          onClick={handleLogout}
-          className={styles.logoutButton}
-        >
+        <Button variant="secondary" onClick={handleLogout} className={styles.logoutButton}>
           خروج
         </Button>
       </div>
@@ -62,20 +67,16 @@ const DashboardPage: React.FC = () => {
       <div className={styles.content}>
         <div className={styles.userCard}>
           <div className={styles.userAvatar}>
-            <img
-              src={user.picture.large}
-              alt={`${user.name.first} ${user.name.last}`}
-              className={styles.avatar}
-            />
+            <img src={large} alt={`${first} ${last}`} className={styles.avatar} />
           </div>
-          
+
           <div className={styles.userInfo}>
             <h2 className={styles.userName}>
-              {user.name.title} {user.name.first} {user.name.last}
+              {title} {first} {last}
             </h2>
-            <p className={styles.userEmail}>{user.email}</p>
+            <p className={styles.userEmail}>{email}</p>
             <p className={styles.userLocation}>
-              {user.location.city}, {user.location.country}
+              {city}, {country}
             </p>
           </div>
         </div>
@@ -83,17 +84,15 @@ const DashboardPage: React.FC = () => {
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
             <h3>سن</h3>
-            <p className={styles.statValue}>{user.dob.age} سال</p>
+            <p className={styles.statValue}>{age} سال</p>
           </div>
           <div className={styles.statCard}>
             <h3>تلفن</h3>
-            <p className={styles.statValue}>{user.phone}</p>
+            <p className={styles.statValue}>{phone}</p>
           </div>
           <div className={styles.statCard}>
             <h3>تاریخ عضویت</h3>
-            <p className={styles.statValue}>
-              {new Date(user.registered.date).toLocaleDateString('fa-IR')}
-            </p>
+            <p className={styles.statValue}>{new Date(date).toLocaleDateString("fa-IR")}</p>
           </div>
         </div>
       </div>

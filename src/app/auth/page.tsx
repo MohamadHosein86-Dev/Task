@@ -3,8 +3,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchRandomUser } from "@/lib/api";
 import { saveUserToStorage } from "@/lib/storage";
-import Input from "@/components/Input";
-import Button from "@/components/Button";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
 import styles from "./page.module.scss";
 
 const AuthPage = () => {
@@ -15,7 +15,7 @@ const AuthPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!phoneNumber.trim()) {
       setError("لطفاً شماره تلفن را وارد کنید");
       return;
@@ -28,7 +28,7 @@ const AuthPage = () => {
       const user = await fetchRandomUser();
       saveUserToStorage(user);
       router.push("/dashboard");
-    } catch (error) {
+    } catch {
       setError("خطا در ورود. لطفاً دوباره تلاش کنید.");
     } finally {
       setIsLoading(false);
@@ -44,17 +44,7 @@ const AuthPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          <Input 
-            label="شماره تلفن" 
-            name="phoneNumber" 
-            type="tel" 
-            placeholder="09123456789" 
-            value={phoneNumber} 
-            onChange={(e) => setPhoneNumber(e.target.value)} 
-            error={error} 
-            dir="ltr" 
-            className={styles.phoneInput} 
-          />
+          <Input label="شماره تلفن" name="phoneNumber" type="tel" placeholder="09123456789" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} error={error} dir="ltr" className={styles.phoneInput} />
 
           <Button type="submit" loading={isLoading} className={styles.submitButton}>
             ورود
