@@ -1,74 +1,35 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { authSchema, type AuthFormData } from "@/lib/validation";
-import { ZodError } from "zod";
 import { fetchRandomUser } from "@/lib/api";
 import { saveUserToStorage } from "@/lib/storage";
 import Input from "@/components/Input";
 import Button from "@/components/Button";
 import styles from "./page.module.scss";
 
-const AuthPage: React.FC = () => {
+const AuthPage = () => {
   const router = useRouter();
-  const [formData, setFormData] = useState<AuthFormData>({
-    phoneNumber: ""
-  });
-  const [errors, setErrors] = useState<Partial<AuthFormData>>({});
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const phoneInputRef = useRef<HTMLInputElement>(null);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-
-    if (errors[name as keyof AuthFormData]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: undefined
-      }));
-    }
-  };
-
-  const validateForm = (): boolean => {
-    try {
-      authSchema.parse(formData);
-      setErrors({});
-      return true;
-    } catch (error) {
-      if (error instanceof ZodError) {
-        const newErrors: Partial<AuthFormData> = {};
-        error.issues.forEach((issue) => {
-          const fieldName = issue.path[0] as keyof AuthFormData;
-          newErrors[fieldName] = issue.message;
-        });
-        setErrors(newErrors);
-      }
-      return false;
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateForm()) {
+    
+    if (!phoneNumber.trim()) {
+      setError("لطفاً شماره تلفن را وارد کنید");
       return;
     }
 
     setIsLoading(true);
+    setError("");
 
     try {
       const user = await fetchRandomUser();
       saveUserToStorage(user);
       router.push("/dashboard");
     } catch (error) {
-      console.error("Login failed:", error);
-      setErrors({
-        phoneNumber: "خطا در ورود. لطفاً دوباره تلاش کنید."
-      });
+      setError("خطا در ورود. لطفاً دوباره تلاش کنید.");
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +44,17 @@ const AuthPage: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          <Input ref={phoneInputRef} label="شماره تلفن" name="phoneNumber" type="tel" placeholder="09123456789" value={formData.phoneNumber} onChange={handleInputChange} error={errors.phoneNumber} dir="ltr" className={styles.phoneInput} />
+          <Input 
+            label="شماره تلفن" 
+            name="phoneNumber" 
+            type="tel" 
+            placeholder="09123456789" 
+            value={phoneNumber} 
+            onChange={(e) => setPhoneNumber(e.target.value)} 
+            error={error} 
+            dir="ltr" 
+            className={styles.phoneInput} 
+          />
 
           <Button type="submit" loading={isLoading} className={styles.submitButton}>
             ورود
