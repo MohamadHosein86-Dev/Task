@@ -1,50 +1,45 @@
-import { useState, useCallback } from 'react';
-import { z } from 'zod';
+import { useState, useCallback } from "react";
+import { z, ZodError, ZodTypeAny } from "zod";
 
-export const useFormValidation = <T extends z.ZodType>(schema: T) => {
-    const [errors, setErrors] = useState<Record<string, string>>({});
+export const useFormValidation = (schema: ZodTypeAny) => {
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-    const validate = useCallback((data: z.infer<T>): boolean => {
-        try {
-            schema.parse(data);
-            setErrors({});
-            return true;
-        } catch (error: any) {
-            if (error.errors) {
-                const newErrors: Record<string, string> = {};
-                error.errors.forEach((err: any) => {
-                    if (err.path) {
-                        newErrors[err.path[0]] = err.message;
-                    }
-                });
-                setErrors(newErrors);
-            }
-            return false;
+  const validate = useCallback((data: unknown): boolean => {
+    try {
+      schema.parse(data);
+      setErrors({});
+      return true;
+    } catch (err) {
+      if (err instanceof ZodError) {
+        const newErrors: Record<string, string> = {};
+        for (const issue of err.issues) {
+          const field = issue.path[0]?.toString();
+          if (field) newErrors[field] = issue.message;
         }
-    }, [schema]);
+        setErrors(newErrors);
+      }
+      return false;
+    }
+  }, [schema]);
 
-    const validateField = useCallback((fieldName: string, value: any): boolean => {
-        try {
-            schema.pick({ [fieldName]: true }).parse({ [fieldName]: value });
-            setErrors(prev => ({ ...prev, [fieldName]: '' }));
-            return true;
-        } catch (error: any) {
-            if (error.errors && error.errors.length > 0) {
-                setErrors(prev => ({ ...prev, [fieldName]: error.errors[0].message }));
-            }
-            return false;
-        }
-    }, [schema]);
+  const validateField = useCallback((field: string, value: unknown): boolean => {
+    try {
+      const fieldSchema = z.object({ [field]: (schema).shape[field] });
+      fieldSchema.parse({ [field]: value });
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+      return true;
+    } catch (err) {
+      if (err instanceof ZodError) {
+        const message = err.issues[0]?.message ?? "";
+        setErrors((prev) => ({ ...prev, [field]: message }));
+      }
+      return false;
+    }
+  }, [schema]);
 
-    const clearError = useCallback((fieldName: string) => {
-        setErrors(prev => ({ ...prev, [fieldName]: '' }));
-    }, []);
+  const clearError = useCallback((field: string) => {
+    setErrors((prev) => ({ ...prev, [field]: "" }));
+  }, []);
 
-    return {
-        errors,
-        validate,
-        validateField,
-        clearError,
-        setErrors
-    };
+  return { errors, validate, validateField, clearError };
 };
